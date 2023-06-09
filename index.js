@@ -26,6 +26,24 @@ async function run() {
 		await client.connect();
 		const classesCollection = client.db("musicSchoolDb").collection("classes");
 		const usersCollection = client.db("musicSchoolDb").collection("users");
+		const selectCollection = client
+			.db("musicSchoolDb")
+			.collection("selectedClass");
+
+		// save class in database
+		app.post("/selectclass", async (req, res) => {
+			const selectedClass = req.body;
+			const query = {
+				name: selectedClass.name,
+				email: selectedClass.user.email,
+			};
+			const existingClass = await selectCollection.findOne(query);
+			if (existingClass) {
+				return res.send({ message: "This Class Already added to your list" });
+			}
+			const result = await selectCollection.insertOne(selectedClass);
+			res.send(result);
+		});
 
 		// save user email and role to db
 		app.post("/users", async (req, res) => {
@@ -47,6 +65,11 @@ async function run() {
 				sort: { students: -1 },
 			};
 			const result = await classesCollection.find(query, options).toArray();
+			res.send(result);
+		});
+		// selected classes api
+		app.get("/mySelectedClass", async (req, res) => {
+			const result = await selectCollection.find().toArray();
 			res.send(result);
 		});
 
