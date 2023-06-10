@@ -33,14 +33,15 @@ async function run() {
 		// save class in database
 		app.post("/selectclass", async (req, res) => {
 			const selectedClass = req.body;
-			const query = {
-				name: selectedClass.name,
-				email: selectedClass.user.email,
-			};
-			const existingClass = await selectCollection.findOne(query);
-			if (existingClass) {
-				return res.send({ message: "This Class Already added to your list" });
-			}
+			console.log(selectedClass);
+			// const query = {
+			// 	name: selectedClass.name,
+			// 	email: selectedClass.user.email,
+			// };
+			// const existingClass = await selectCollection.findOne(query);
+			// if (existingClass) {
+			// 	return res.send({ message: "This Class Already added to your list" });
+			// }
 			const result = await selectCollection.insertOne(selectedClass);
 			res.send(result);
 		});
@@ -48,9 +49,9 @@ async function run() {
 		// search user by email
 		app.get("/dashboard/:email", async (req, res) => {
 			const email = req.params.email;
-			const query={email:email};
-            const result=await usersCollection.findOne(query)
-            res.send(result)
+			const query = { email: email };
+			const result = await usersCollection.findOne(query);
+			res.send(result);
 		});
 
 		// save user email and role to db
@@ -76,8 +77,10 @@ async function run() {
 			res.send(result);
 		});
 		// selected classes api
-		app.get("/mySelectedClass", async (req, res) => {
-			const result = await selectCollection.find().toArray();
+		app.get("/mySelectedClass/:email", async (req, res) => {
+			const email = req.params.email;
+			const query = { userEmail: email };
+			const result = await selectCollection.find(query).toArray();
 			res.send(result);
 		});
 
