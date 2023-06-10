@@ -45,6 +45,14 @@ async function run() {
 			res.send(result);
 		});
 
+		// search user by email
+		app.get("/dashboard/:email", async (req, res) => {
+			const email = req.params.email;
+			const query={email:email};
+            const result=await usersCollection.findOne(query)
+            res.send(result)
+		});
+
 		// save user email and role to db
 		app.post("/users", async (req, res) => {
 			const user = req.body;
