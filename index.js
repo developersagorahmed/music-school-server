@@ -37,6 +37,7 @@ async function run() {
 			// const query = {
 			// 	name: selectedClass.name,
 			// 	email: selectedClass.user.email,
+			// [TO DO]
 			// };
 			// const existingClass = await selectCollection.findOne(query);
 			// if (existingClass) {
