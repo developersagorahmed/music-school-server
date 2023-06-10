@@ -66,6 +66,12 @@ async function run() {
 			const result = await usersCollection.insertOne(user);
 			res.send(result);
 		});
+        // add class to server api 
+		app.post("/addAClass", async (req, res) => {
+			const classData = req.body;
+			const result = await classesCollection.insertOne(classData);
+			res.send(result);
+		});
 
 		// classes related api
 
@@ -74,7 +80,10 @@ async function run() {
 			const options = {
 				sort: { students: -1 },
 			};
-			const result = await classesCollection.find(query, options).toArray();
+			const result = await classesCollection
+				.find(query, options)
+				.limit(6)
+				.toArray();
 			res.send(result);
 		});
 		// selected classes api
@@ -91,7 +100,10 @@ async function run() {
 			const options = {
 				sort: { students: -1 },
 			};
-			const result = await classesCollection.find(query, options).toArray();
+			const result = await classesCollection
+				.find(query, options)
+				.limit(6)
+				.toArray();
 			res.send(result);
 		});
 		// delete items api
