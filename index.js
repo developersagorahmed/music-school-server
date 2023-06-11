@@ -66,10 +66,57 @@ async function run() {
 			const result = await usersCollection.insertOne(user);
 			res.send(result);
 		});
-        // add class to server api 
+
+		// make api for instructor class base on email
+		app.get(`/dashboard/myClasses/:email`, async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email };
+			const result = await classesCollection.find(query).toArray();
+			res.send(result);
+		});
+
+		//handle update
+
+		app.put("/dashboard/myClasses/:id", async (req, res) => {
+			const id = req.params.id;
+			const updateData = req.body;
+			const filter = { _id: new ObjectId(id) };
+			const options = { upsert: true };
+			const updatedClass = {
+				$set: {
+					classname: updateData.classname,
+					available_seats: updateData.available_seats,
+					students: updateData.students,
+					dur: updateData.dur,
+					price: updateData.price,
+				},
+			};
+			const result = await classesCollection.updateOne(
+				filter,
+				updatedClass,
+				options
+			);
+			res.send(result);
+
+			console.log(updateData);
+		});
+		// add class to server api
 		app.post("/addAClass", async (req, res) => {
 			const classData = req.body;
 			const result = await classesCollection.insertOne(classData);
+			res.send(result);
+		});
+		// class selected api
+		app.get("/dashboard/myClasses/editClass/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: new ObjectId(id) };
+			const result = await classesCollection.findOne(query);
+			res.send(result);
+		});
+
+		// classes management for admin api
+		app.get("/manageClasses", async (req, res) => {
+			const result = await classesCollection.find().toArray();
 			res.send(result);
 		});
 
