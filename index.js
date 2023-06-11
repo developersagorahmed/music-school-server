@@ -91,6 +91,13 @@ async function run() {
 					price: updateData.price,
 				},
 			};
+			// update status
+			// app.put("/dashboard/myClasses/:id", async (req, res) => {
+			// 	const id = req.params.id;
+			// 	const updatedStatus = req.body;
+			// 	console.log(id, updatedStatus);
+			// });
+
 			const result = await classesCollection.updateOne(
 				filter,
 				updatedClass,
@@ -120,7 +127,21 @@ async function run() {
 			res.send(result);
 		});
 
+		// to do
+		app.put("/dashboard/myClasses", async (req, res) => {
+			const id = req.params.id;
+			const data = req.body;
+			console.log(data);
+		});
 		// classes related api
+		app.get("/instructors", async (req, res) => {
+			const query = {};
+			const filter = {
+				role: "ins",
+			};
+			const result = await usersCollection.find(filter).toArray();
+			res.send(result);
+		});
 
 		app.get("/classes", async (req, res) => {
 			const query = {};
