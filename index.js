@@ -162,6 +162,12 @@ async function run() {
 			res.send(result);
 		});
 
+		// all classes api
+		app.get("/classes", async (req, res) => {
+			const result = await classesCollection.find().toArray();
+			res.send(result);
+		});
+
 		// top instructor classes
 		app.get("/topInstructorClass", async (req, res) => {
 			const query = {};
