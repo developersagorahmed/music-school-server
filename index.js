@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
@@ -20,6 +21,29 @@ const client = new MongoClient(uri, {
 	},
 });
 
+// validate jwt
+const verifyJwt = (req, res, next) => {
+	const authorization = req.headers.authorization;
+	// token verify
+	if (!authorization) {
+		return res
+			.status(401)
+			.send({ error: true, message: "Unauthorized Access" });
+	}
+	const token = authorization.split(" ")[1];
+
+	jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+		if (err) {
+			return res
+				.status(401)
+				.send({ error: true, message: "Unauthorized Access" });
+		}
+
+		req.decoded = decoded;
+		next();
+	});
+};
+
 async function run() {
 	try {
 		// Connect the client to the server	(optional starting in v4.7)
@@ -29,11 +53,19 @@ async function run() {
 		const selectCollection = client
 			.db("musicSchoolDb")
 			.collection("selectedClass");
+		// generate jwt token
+		app.post("/jwt", (req, res) => {
+			const email = req.body;
+			const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
+				expiresIn: "1h",
+			});
 
+			res.send({ token });
+		});
 		// save class in database
 		app.post("/selectclass", async (req, res) => {
 			const selectedClass = req.body;
-			console.log(selectedClass);
+			// console.log(selectedClass);
 			// const query = {
 			// 	name: selectedClass.name,
 			// 	email: selectedClass.user.email,
@@ -105,7 +137,7 @@ async function run() {
 			);
 			res.send(result);
 
-			console.log(updateData);
+			// console.log(updateData);
 		});
 		// add class to server api
 		app.post("/addAClass", async (req, res) => {
@@ -155,8 +187,14 @@ async function run() {
 			res.send(result);
 		});
 		// selected classes api
-		app.get("/mySelectedClass/:email", async (req, res) => {
+		// selected classes api
+		// selected classes api
+		// selected classes api
+		app.get("/mySelectedClass/:email", verifyJwt, async (req, res) => {
+			const decodedEmail = req.decoded.email;
+			console.log(decodedEmail);
 			const email = req.params.email;
+
 			const query = { userEmail: email };
 			const result = await selectCollection.find(query).toArray();
 			res.send(result);
