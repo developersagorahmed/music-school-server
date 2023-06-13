@@ -186,6 +186,25 @@ async function run() {
 			console.log(data, id);
 		});
 
+		// user management and update
+		app.put("/role/update/:id", async (req, res) => {
+			const id = req.body._id;
+			const roles = req.body.role;
+			const filter = { _id: new ObjectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					role: roles,
+				},
+			};
+			const result = await usersCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			res.send(result);
+		});
+
 		// all user api
 		app.get("/allUser", async (req, res) => {
 			const result = await usersCollection.find().toArray();
