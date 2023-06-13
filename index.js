@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 // middleware
 app.use(cors());
@@ -49,10 +50,52 @@ async function run() {
 		// Connect the client to the server	(optional starting in v4.7)
 		await client.connect();
 		const classesCollection = client.db("musicSchoolDb").collection("classes");
+		const bookingCollection = client.db("musicSchoolDb").collection("booking");
 		const usersCollection = client.db("musicSchoolDb").collection("users");
 		const selectCollection = client
 			.db("musicSchoolDb")
 			.collection("selectedClass");
+
+		// generate client secret
+		app.post("/create-payment-intent", async (req, res) => {
+			const { price } = req.body;
+			const amount = parseFloat(price) * 100;
+			if (!price) return;
+			const paymentIntent = await stripe.paymentIntents.create({
+				amount: amount,
+				currency: "usd",
+				payment_method_types: ["card"],
+			});
+
+			res.send({
+				clientSecret: paymentIntent.client_secret,
+			});
+		});
+		app.post("/bookings", async (req, res) => {
+			const booking = req.body;
+			const result = await bookingCollection.insertOne(booking);
+			if (result.insertedId) {
+				// Send confirmation email to guest
+				sendMail(
+					{
+						subject: "Booking Successful!",
+						message: `Booking Id: ${result?.insertedId}, TransactionId: ${booking.transactionId}`,
+					},
+					booking?.guest?.email
+				);
+				// Send confirmation email to host
+				sendMail(
+					{
+						subject: "Your room got booked!",
+						message: `Booking Id: ${result?.insertedId}, TransactionId: ${booking.transactionId}. Check dashboard for more info`,
+					},
+					booking?.host
+				);
+			}
+			console.log(result);
+			res.send(result);
+		});
+
 		// generate jwt token
 		app.post("/jwt", (req, res) => {
 			const email = req.body;
@@ -107,24 +150,38 @@ async function run() {
 			res.send(result);
 		});
 
+		app.get("/myEnrolledClass/:email", async (req, res) => {
+			const email = req.params.email;
+			const query = { email: email };
+			const result = await bookingCollection.find(query).toArray();
+			res.send(result);
+			console.log(email);
+		});
+
+		app.get("/feedback/:id", async (req, res) => {
+			const id = req.params.id;
+			console.log(id);
+		});
+
 		//handle update
 
 		app.put("/dashboard/myClasses/:id", async (req, res) => {
 			const id = req.params.id;
 			const updateData = req.body;
+			console.log(updateData);
 			const filter = { _id: new ObjectId(id) };
 			const options = { upsert: true };
 			const updatedClass = {
 				$set: {
-					classname: updateData.classname,
 					available_seats: updateData.available_seats,
 					students: updateData.students,
 					dur: updateData.dur,
 					price: updateData.price,
+					approved: updateData.approved,
 				},
 			};
 			// update status
-			// app.put("/dashboard/myClasses/:id", async (req, res) => {
+			// app.patch("/status/:id", async (req, res) => {
 			// 	const id = req.params.id;
 			// 	const updatedStatus = req.body;
 			// 	console.log(id, updatedStatus);
@@ -143,6 +200,12 @@ async function run() {
 		app.post("/addAClass", async (req, res) => {
 			const classData = req.body;
 			const result = await classesCollection.insertOne(classData);
+			res.send(result);
+		});
+
+		app.post("/my-pay", async (req, res) => {
+			const payData = req.body;
+			const result = await bookingCollection.insertOne(payData);
 			res.send(result);
 		});
 		// class selected api
@@ -173,6 +236,15 @@ async function run() {
 			};
 			const result = await usersCollection.find(filter).toArray();
 			res.send(result);
+		});
+
+		// get payment search by id
+		app.get("/dashboard/payment/:id", async (req, res) => {
+			const id = req.params.id;
+			console.log(id);
+			const query = { _id: new ObjectId(id) };
+			const result = await classesCollection.findOne(query);
+			res.send({ result });
 		});
 
 		app.get("/classes", async (req, res) => {
