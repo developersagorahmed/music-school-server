@@ -161,7 +161,34 @@ async function run() {
 		app.get("/feedback/:id", async (req, res) => {
 			const id = req.params.id;
 			console.log(id);
+			const query = { _id: new ObjectId(id) };
+			const result = await classesCollection.findOne(query);
+			res.send(result);
 		});
+
+		// feedback
+		app.put("/feedback/send/:id", async (req, res) => {
+			const id = req.params.id;
+			const data = req.body;
+			const filter = { _id: new ObjectId(id) };
+			const options = { upsert: true };
+			const updateDoc = {
+				$set: {
+					feedback: data.feedbackData,
+				},
+			};
+			const result = await classesCollection.updateOne(
+				filter,
+				updateDoc,
+				options
+			);
+			res.send(result);
+			console.log(data, id);
+		});
+
+
+		// all user api 
+		
 
 		//handle update
 
