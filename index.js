@@ -186,9 +186,11 @@ async function run() {
 			console.log(data, id);
 		});
 
-
-		// all user api 
-		
+		// all user api
+		app.get("/allUser", async (req, res) => {
+			const result = await usersCollection.find().toArray();
+			res.send(result);
+		});
 
 		//handle update
 
